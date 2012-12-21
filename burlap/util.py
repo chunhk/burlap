@@ -28,6 +28,12 @@ def initd_control(script, cmd):
   else:
     sudo("/etc/init.d/%s %s" % (script, cmd))
 
+def upstart_control(service, cmd):
+  if cmd == "status":
+    run("status %s" % service)
+  else:
+    sudo("%s %s" % (cmd, service))
+
 def run_cmd(cmd):
   run(cmd)
 
