@@ -5,32 +5,38 @@ from burlap.util import *
 
 DEFAULT_APT_PATH = "/etc/apt/sources.list.d"
 
-def check_apt_repo(apt_repo_file):
-  return files.exists(DEFAULT_APT_PATH + "/" + apt_repo_file)
+class Apt:
 
-def check_apt_repo_task(apt_repo_file):
-  if check_apt_repo(apt_repo_file):
-    print "apt repo %s exists" % apt_repo_file
-  else:
-    print "apt repo %s does not exist" % apt_repo_file
+  def __init__(self, resource_path, remote_apt_path=DEFAULT_APT_PATH):
+    self.resource_path = resource_path
+    self.remote_apt_path = remote_apt_path
 
-def install_apt_repo(apt_repo_file):
-  remote_file = DEFAULT_APT_PATH + "/" + apt_repo_file
-  alt_put("resources/" + apt_repo_file, remote_file, use_sudo=True, owner="root", group="root")
-  apt_update()
+  def check_apt_repo(self, apt_repo_file):
+    return files.exists(self.remote_file + "/" + apt_repo_file)
 
-def add_apt_repository(repo, auto=True):
-  if auto:
-    sudo("add-apt-repository -y %s" % repo)
-  else:
-    sudo("add-apt-repository %s" % repo)
+  def check_apt_repo_task(self, apt_repo_file):
+    if self.check_apt_repo(apt_repo_file):
+      print "apt repo %s exists" % apt_repo_file
+    else:
+      print "apt repo %s does not exist" % apt_repo_file
 
-def apt_update():
-  sudo("apt-get update")
+  def install_apt_repo(self, apt_repo_file):
+    remote_file = self.remote_apt_path + "/" + apt_repo_file
+    alt_put(self.resource_path + "/" + apt_repo_file, remote_file, use_sudo=True, owner="root", group="root")
+    apt_update()
 
-def apt_install(package, auto=True):
-  if auto:
-    sudo("apt-get install -y %s" % package)
-  else:
-    sudo("apt-get install %s" % package)
+  def add_apt_repository(self, repo, auto=True):
+    if auto:
+      sudo("add-apt-repository -y %s" % repo)
+    else:
+      sudo("add-apt-repository %s" % repo)
+
+  def apt_update(self):
+    sudo("apt-get update")
+
+  def apt_install(self, package, auto=True):
+    if auto:
+      sudo("apt-get install -y %s" % package)
+    else:
+      sudo("apt-get install %s" % package)
 

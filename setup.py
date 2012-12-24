@@ -10,5 +10,6 @@ setup(
   long_description='Personal Python Fabric Utils',
   install_requires=[
     "fabric >= 1.5",
+    "jinja2 >= 2.6",
   ],
 )
