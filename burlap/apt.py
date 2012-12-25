@@ -1,7 +1,7 @@
 from fabric.api import *
 from fabric.contrib import files
 
-from burlap.util import *
+from burlap import util
 
 DEFAULT_APT_PATH = "/etc/apt/sources.list.d"
 
@@ -17,12 +17,15 @@ class Apt:
   def check_apt_repo_task(self, apt_repo_file):
     if self.check_apt_repo(apt_repo_file):
       print "apt repo %s exists" % apt_repo_file
+      return True
     else:
       print "apt repo %s does not exist" % apt_repo_file
+      return False
 
   def install_apt_repo(self, apt_repo_file):
     remote_file = self.remote_apt_path + "/" + apt_repo_file
-    alt_put(self.resource_path + "/" + apt_repo_file, remote_file, use_sudo=True, owner="root", group="root")
+    util.remote_file(self.resource_path + "/" + apt_repo_file, \
+        remote_file, use_sudo=True, owner="root", group="root")
     self.apt_update()
 
   def add_apt_repository(self, repo, auto=True):
@@ -33,6 +36,9 @@ class Apt:
 
   def apt_update(self):
     sudo("apt-get update")
+
+  def apt_upgrade(self):
+    sudo("apt-get upgrade -y")
 
   def apt_install(self, package, auto=True):
     if auto:
