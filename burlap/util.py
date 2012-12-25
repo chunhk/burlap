@@ -94,6 +94,7 @@ def alt_put(src_file, destination, use_sudo=False, remote_tmp="/tmp", **kwargs):
     final_destination = destination
     print "backing up original file"
     mv(destination, bkup_name, use_sudo)
+    chmod(bkup_name, "a-x")
     mv(remote_name, destination, use_sudo)
   elif dir_exists(destination):
     final_destination = destination + "/" + basename
@@ -116,7 +117,9 @@ def md5_string(s):
   h.update(s)
   return h.hexdigest()
 
-def put_template(template_file, variables, destination, use_sudo=False, **kwargs):
+def put_template(template_file, variables, destination, \
+    use_sudo=False, **kwargs):
+
   with open(template_file, 'r') as f:
     template_content = f.read()
 
@@ -130,3 +133,16 @@ def put_template(template_file, variables, destination, use_sudo=False, **kwargs
   alt_put(local_file, destination, use_sudo=use_sudo, **kwargs)
   local("rm %s" % local_file)
   
+def run_template(template_file, variables, destination=None, \
+    use_sudo=False, **kwargs):
+
+  if not destination:
+    destination = "/tmp/" + md5_string(template_file + str(variables))
+
+  put_template(template_file, variables, destination, use_sudo, **kwargs)
+  chmod(destination, permissions="+x", use_sudo=use_sudo)
+
+  if use_sudo:
+    sudo(destination)
+  else:
+    run(destination)
