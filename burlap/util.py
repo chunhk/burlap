@@ -84,13 +84,15 @@ def http_get(url, dest_file, use_sudo=False):
 def remote_file(src_file, dest_file, use_sudo=False, \
     tmp_dir="/tmp", **kwargs):
 
-  md5 = md5_for_file(src_file)
   basename = os.path.basename(src_file)
-  remote_name = tmp_dir + "/" + md5
 
   if src_file.startswith("http://") or src_file.startswith("https://"):
+    md5 = string_md5(src_file)
+    remote_name = tmp_dir + "/" + md5
     http_get(url=src_file, dest_file=remote_name, use_sudo=use_sudo)
   else:
+    md5 = file_md5(src_file)
+    remote_name = tmp_dir + "/" + md5
     put(src_file, remote_name)
 
   final_destination = None
@@ -114,11 +116,37 @@ def remote_file(src_file, dest_file, use_sudo=False, \
   path_props(final_destination, use_sudo=use_sudo, **file_properties)
 
 
+def remote_archive(src_file, dest_path, use_sudo=False, \
+    tmp_dir="/tmp", **kwargs):
+
+  basename = os.path.basename(src_file)
+  remote_name = tmp_dir + "/" + basename
+
+  remote_file(src_file, remote_name, use_sudo=use_sudo, tmp_dir=tmp_dir)
+  run_func = sudo if use_sudo else run
+
+  if basename.endswith("tar.gz") or basename.endswith(".tgz") or \
+      basename.endswith(".tar"): 
+    if dir_exists(dest_path) or file_exists(dest_path):
+      raise RuntimeError("destination path already exists: " + dest_path)
+    else:
+      run_func("mkdir %s" % dest_path)
+      run_func("tar --strip-components 1 -xf %s -C %s" % \
+          (remote_name, dest_path))
+  else:
+    raise NotImplementedError("file format not supported: " + basename)
+
+  file_properties = {k: kwargs[k] if k in kwargs else None \
+      for k in ('owner', 'group', 'permissions')}
+  path_props(dest_path, use_sudo=use_sudo, recursive=True, \
+      **file_properties)
+
+
 def run_remote_file(src_file, dest_file=None, use_sudo=False, \
     tmp_dir="/tmp"):
 
   if not dest_file:
-    dest_file = tmp_dir + "/" + md5_string(template_file + str(variables))
+    dest_file = tmp_dir + "/" + string_md5(template_file + str(variables))
 
   remote_file(src_file, dest_file, use_sudo=use_sudo)
   chmod(dest_file, permissions="+x", use_sudo=use_sudo)
@@ -128,6 +156,7 @@ def run_remote_file(src_file, dest_file=None, use_sudo=False, \
   else:
     run(dest_file)
 
+
 def remote_template(template_file, variables, dest_file, \
     use_sudo=False, **kwargs):
 
@@ -136,7 +165,7 @@ def remote_template(template_file, variables, dest_file, \
 
   template = Template(template_content)
   content = template.render(**variables)
-  local_file = "/tmp/" + md5_string(content)
+  local_file = "/tmp/" + string_md5(content)
 
   with open(local_file, 'w') as f:
     f.write(content)
