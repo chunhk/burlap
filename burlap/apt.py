@@ -12,7 +12,7 @@ class Apt:
     self.remote_apt_path = remote_apt_path
 
   def check_apt_repo(self, apt_repo_file):
-    return files.exists(self.remote_file + "/" + apt_repo_file)
+    return files.exists(self.remote_apt_path + "/" + apt_repo_file)
 
   def check_apt_repo_task(self, apt_repo_file):
     if self.check_apt_repo(apt_repo_file):
@@ -23,7 +23,7 @@ class Apt:
   def install_apt_repo(self, apt_repo_file):
     remote_file = self.remote_apt_path + "/" + apt_repo_file
     alt_put(self.resource_path + "/" + apt_repo_file, remote_file, use_sudo=True, owner="root", group="root")
-    apt_update()
+    self.apt_update()
 
   def add_apt_repository(self, repo, auto=True):
     if auto:
