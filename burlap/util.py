@@ -74,6 +74,10 @@ def mv(src, dest, use_sudo=False):
   run_func("mv %s %s" % (src, dest))
 
 
+def tar_top_level_dir(tar_file):
+  return run("tar -tf %s | grep -o '^[^/]\+' | sort -u" % tar_file)
+
+
 def http_get(url, dest_file, use_sudo=False):
   cmd = "wget %s -O %s"
   run_func = sudo if use_sudo else run
