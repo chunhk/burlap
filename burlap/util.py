@@ -169,7 +169,7 @@ def remote_template(template_file, variables, dest_file, \
 
   template = Template(template_content)
   content = template.render(**variables)
-  local_file = "/tmp/" + string_md5(content)
+  local_file = "/tmp/" + string_md5(content) + ".template"
 
   with open(local_file, 'w') as f:
     f.write(content)
