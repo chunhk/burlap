@@ -3,6 +3,7 @@ import os
 import time
 
 from fabric.api import *
+from fabric.contrib import project as rsync
 from jinja2.environment import Template
 
 
@@ -74,6 +75,16 @@ def mv(src, dest, use_sudo=False):
   run_func("mv %s %s" % (src, dest))
 
 
+def mkdir(new_dir, recursive=False, use_sudo=False, owner=None, group=None):
+  run_func = sudo if use_sudo else run
+  if recursive:
+    run_func("mkdir -p %s" % new_dir)
+  else:
+    run_func("mkdir %s" % new_dir)
+
+  path_props(new_dir, owner=owner, group=group, recursive=True, use_sudo=use_sudo)
+
+
 def tar_top_level_dir(tar_file):
   return run("tar -tf %s | grep -o '^[^/]\+' | sort -u" % tar_file)
 
@@ -86,7 +97,7 @@ def http_get(url, dest_file, use_sudo=False):
 
 # kwargs owner, group, permissions
 def remote_file(src_file, dest_file, use_sudo=False, \
-    tmp_dir="/tmp", **kwargs):
+    tmp_dir="/tmp", backup=True, **kwargs):
 
   basename = os.path.basename(src_file)
 
@@ -102,10 +113,12 @@ def remote_file(src_file, dest_file, use_sudo=False, \
   final_destination = None
 
   if file_exists(dest_file):
-    bkup_name = dest_file + "." + str(int(time.time())) + ".bkup"
-    final_destination = dest_file
-    print "backing up original file"
-    mv(dest_file, bkup_name, use_sudo)
+    if backup:
+      bkup_name = dest_file + "." + str(int(time.time())) + ".bkup"
+      final_destination = dest_file
+      print "backing up original file"
+      mv(dest_file, bkup_name, use_sudo)
+
     chmod(bkup_name, "a-x", use_sudo=use_sudo)
     mv(remote_name, dest_file, use_sudo)
   elif dir_exists(dest_file):
@@ -118,6 +131,40 @@ def remote_file(src_file, dest_file, use_sudo=False, \
   file_properties = {k: kwargs[k] if k in kwargs else None \
       for k in ('owner', 'group', 'permissions')}
   path_props(final_destination, use_sudo=use_sudo, **file_properties)
+
+
+def remote_dir(src_dir, dest_dir, use_sudo=False, backup=False, backup_dir=None, tmp_dir="/tmp", **kwargs):
+  """
+  if dest_dir ends with /, it will put the src basedir in the directory
+  if dest_dir does not end with /, it will put the src contents in there
+  """
+  run_func = sudo if use_sudo else run
+
+  # strip of trailing slash
+  if dest_dir[-1] == "/":
+    dest_dir = dest_dir[0:-1]
+
+  if backup and dir_exists(dest_dir):
+    the_backup_dir = backup_dir if backup_dir else "/home/" + env.user + "/fab_bkup"
+    if not dir_exists(the_backup_dir):
+      mkdir(the_backup_dir)
+
+    dest_parent = dest_dir[0:dest_dir.rfind("/")]
+    dest_base = os.path.basename(dest_dir)
+    with cd(dest_parent):
+      run("tar cfzh %s/%s %s" % (the_backup_dir, \
+        dest_dir[1:].replace("/", "_") + "." + str(int(time.time())) + ".tgz", dest_base))
+
+  tmp_remote_dir = tmp_dir + "/" + dest_dir[1:].replace("/", "_")
+  rsync.rsync_project(local_dir=src_dir, remote_dir=tmp_remote_dir, delete=True)
+
+  if not dir_exists(dest_dir):
+    mkdir(dest_dir, use_sudo=use_sudo, **kwargs)
+
+  with cd(tmp_remote_dir):
+    run_func("mv * %s" % dest_dir)
+
+  path_props(dest_dir, use_sudo=use_sudo, recursive=True, **kwargs)
 
 
 def remote_archive(src_file, dest_path, use_sudo=False, \
