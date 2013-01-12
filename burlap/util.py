@@ -144,6 +144,8 @@ def remote_dir(src_dir, dest_dir, use_sudo=False, backup=False, backup_dir=None,
   if dest_dir[-1] == "/":
     dest_dir = dest_dir[0:-1]
 
+  tmp_name = dest_dir[1:].replace("/", "_")
+
   if backup and dir_exists(dest_dir):
     the_backup_dir = backup_dir if backup_dir else "/home/" + env.user + "/fab_bkup"
     if not dir_exists(the_backup_dir):
@@ -153,9 +155,9 @@ def remote_dir(src_dir, dest_dir, use_sudo=False, backup=False, backup_dir=None,
     dest_base = os.path.basename(dest_dir)
     with cd(dest_parent):
       run("tar cfzh %s/%s %s" % (the_backup_dir, \
-        dest_dir[1:].replace("/", "_") + "." + str(int(time.time())) + ".tgz", dest_base))
+        tmp_name + "." + str(int(time.time())) + ".tgz", dest_base))
 
-  tmp_remote_dir = tmp_dir + "/" + dest_dir[1:].replace("/", "_")
+  tmp_remote_dir = tmp_dir + "/" + tmp_name
   rsync.rsync_project(local_dir=src_dir, remote_dir=tmp_remote_dir, delete=True)
 
   if not dir_exists(dest_dir):
