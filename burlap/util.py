@@ -97,7 +97,7 @@ def http_get(url, dest_file, use_sudo=False):
 
 # kwargs owner, group, permissions
 def remote_file(src_file, dest_file, use_sudo=False, \
-    tmp_dir="/tmp", backup=True, **kwargs):
+    tmp_dir="/tmp", backup=True, hash_file=True, **kwargs):
 
   basename = os.path.basename(src_file)
 
@@ -106,7 +106,7 @@ def remote_file(src_file, dest_file, use_sudo=False, \
     remote_name = tmp_dir + "/" + md5
     http_get(url=src_file, dest_file=remote_name, use_sudo=use_sudo)
   else:
-    md5 = file_md5(src_file)
+    md5 = file_md5(src_file) if hash_file else string_md5(src_file)
     remote_name = tmp_dir + "/" + md5
     put(src_file, remote_name)
 
