@@ -170,12 +170,13 @@ def remote_dir(src_dir, dest_dir, use_sudo=False, backup=False, backup_dir=None,
 
 
 def remote_archive(src_file, dest_path, use_sudo=False, \
-    tmp_dir="/tmp", **kwargs):
+    tmp_dir="/tmp", hash_file=True, **kwargs):
 
   basename = os.path.basename(src_file)
   remote_name = tmp_dir + "/" + basename
 
-  remote_file(src_file, remote_name, use_sudo=use_sudo, tmp_dir=tmp_dir)
+  remote_file(src_file, remote_name, use_sudo=use_sudo, tmp_dir=tmp_dir, \
+      hash_file=hash_file)
   run_func = sudo if use_sudo else run
 
   if basename.endswith("tar.gz") or basename.endswith(".tgz") or \
