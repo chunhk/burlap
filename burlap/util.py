@@ -113,13 +113,13 @@ def remote_file(src_file, dest_file, use_sudo=False, \
   final_destination = None
 
   if file_exists(dest_file):
+    final_destination = dest_file
     if backup:
       bkup_name = dest_file + "." + str(int(time.time())) + ".bkup"
-      final_destination = dest_file
       print "backing up original file"
       mv(dest_file, bkup_name, use_sudo)
+      chmod(bkup_name, "a-x", use_sudo=use_sudo)
 
-    chmod(bkup_name, "a-x", use_sudo=use_sudo)
     mv(remote_name, dest_file, use_sudo)
   elif dir_exists(dest_file):
     final_destination = dest_file + "/" + basename
