@@ -170,13 +170,15 @@ def remote_dir(src_dir, dest_dir, use_sudo=False, backup=False, backup_dir=None,
 
 
 def remote_archive(src_file, dest_path, use_sudo=False, \
-    tmp_dir="/tmp", hash_file=True, **kwargs):
+    tmp_dir="/tmp", hash_file=True, skip_if_exists=True, **kwargs):
 
   basename = os.path.basename(src_file)
   remote_name = tmp_dir + "/" + basename
 
-  remote_file(src_file, remote_name, use_sudo=use_sudo, tmp_dir=tmp_dir, \
-      hash_file=hash_file)
+  if not skip_if_exists or not file_exists(remote_name):
+    remote_file(src_file, remote_name, use_sudo=use_sudo, tmp_dir=tmp_dir, \
+        hash_file=hash_file)
+
   run_func = sudo if use_sudo else run
 
   if basename.endswith("tar.gz") or basename.endswith(".tgz") or \
@@ -186,6 +188,13 @@ def remote_archive(src_file, dest_path, use_sudo=False, \
     else:
       run_func("mkdir %s" % dest_path)
       run_func("tar --strip-components 1 -xf %s -C %s" % \
+          (remote_name, dest_path))
+  elif basename.endswith("tar.bz2") or basename.endswith("tbz2"):
+    if dir_exists(dest_path) or file_exists(dest_path):
+      raise RuntimeError("destination path already exists: " + dest_path)
+    else:
+      run_func("mkdir %s" % dest_path)
+      run_func("tar --strip-components 1 -xjf %s -C %s" % \
           (remote_name, dest_path))
   else:
     raise NotImplementedError("file format not supported: " + basename)
