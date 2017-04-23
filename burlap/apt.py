@@ -16,10 +16,10 @@ class Apt:
 
   def check_apt_repo_task(self, apt_repo_file):
     if self.check_apt_repo(apt_repo_file):
-      print "apt repo %s exists" % apt_repo_file
+      print("apt repo %s exists" % apt_repo_file)
       return True
     else:
-      print "apt repo %s does not exist" % apt_repo_file
+      print("apt repo %s does not exist" % apt_repo_file)
       return False
 
   def install_apt_repo(self, apt_repo_file):

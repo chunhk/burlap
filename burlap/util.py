@@ -116,7 +116,7 @@ def remote_file(src_file, dest_file, use_sudo=False, \
     final_destination = dest_file
     if backup:
       bkup_name = dest_file + "." + str(int(time.time())) + ".bkup"
-      print "backing up original file"
+      print("backing up original file")
       mv(dest_file, bkup_name, use_sudo)
       chmod(bkup_name, "a-x", use_sudo=use_sudo)
 
