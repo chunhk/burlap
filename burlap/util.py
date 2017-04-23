@@ -273,7 +273,7 @@ def _file_md5(path, block_size=2**20):
       data = f.read(block_size)
       if not data:
         break
-      md5.update(data)
+      md5.update(data.encode('utf-8'))
     return md5.hexdigest()
 
 
