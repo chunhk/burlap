@@ -262,8 +262,7 @@ def home_path():
 
 def string_md5(s):
   h = hashlib.md5()
-  s.encode('utf-8')
-  h.update(s)
+  h.update(s.encode('utf-8'))
   return h.hexdigest()
 
 
